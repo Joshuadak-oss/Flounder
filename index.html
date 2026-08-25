@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>Flounder</title>
+
+        <link rel="stylesheet" href="style.css">
+    </head>
+
+    <body>
+
+        <section class="auth-page" id="authPage">
+            <div class="auth-panel">
+                <div class="auth-brand-mark">F</div>
+                <p class="auth-eyebrow">YOUR FOCUS, IN ONE PLACE</p>
+                <h1>Welcome to Flounder</h1>
+                <p class="auth-intro">Study, organize, and keep your best ideas moving forward.</p>
+
+                <div class="auth-actions">
+                    <button class="provider-button provider-button--apple" data-provider="Apple" type="button">
+                        <span class="provider-icon" aria-hidden="true">&#63743;</span>
+                        <span>Continue with Apple</span>
+                    </button>
+                    <button class="provider-button provider-button--google" data-provider="Google" type="button">
+                        <span class="provider-icon provider-icon--google" aria-hidden="true">G</span>
+                        <span>Continue with Google</span>
+                    </button>
+                </div>
+
+                <p class="auth-terms">By continuing, you agree to Flounder&apos;s terms and privacy policy.</p>
+                <p class="auth-status" id="authStatus" role="status" aria-live="polite"></p>
+            </div>
+        </section>
+
+        <div id="appShell" hidden>
+            <header class="top-bar">
+                <div class="top-bar-inner">
+                    <div>
+                        <p class="top-bar-kicker">YOUR PERSONAL STUDY SPACE</p>
+                        <h1>Flounder</h1>
+                    </div>
+                    <p class="top-bar-tagline">Connect. Share. Create.</p>
+                </div>
+            </header>
+
+            <main>
+                <section class="profile">
+                    <div class="profile-picture" aria-hidden="true">F</div>
+                    <div class="profile-info">
+                        <p class="section-kicker">YOUR PROFILE</p>
+                        <h2 id="profileName">Flounder User</h2>
+                        <p id="profileUsername">@flounderuser</p>
+                        <p class="bio" id="profileBio">Welcome to your Flounder profile.</p>
+                    </div>
+                    <div class="profile-stats">
+                        <div><strong>0</strong><span>Time</span></div>
+                        <div><strong>0</strong><span>Streak</span></div>
+                    </div>
+                    <form class="profile-editor" id="profileForm">
+                        <div class="profile-editor-fields">
+                            <label for="nameInput">Display name</label>
+                            <input id="nameInput" type="text" maxlength="40" placeholder="Your name" required>
+                            <label for="bioInput">Bio</label>
+                            <textarea id="bioInput" maxlength="160" placeholder="Tell people a little about yourself..."></textarea>
+                        </div>
+                        <div class="profile-editor-actions">
+                            <button class="profile-save-button" type="submit">Save Profile</button>
+                            <button class="profile-cancel-button" id="cancelProfileBtn" type="button">Cancel</button>
+                        </div>
+                        <p class="profile-save-status" id="profileSaveStatus" role="status" aria-live="polite"></p>
+                    </form>
+                </section>
+
+                <section class="content-section quick-notes-card">
+                    <div class="section-heading">
+                        <div>
+                            <p class="section-kicker">CAPTURE AN IDEA</p>
+                            <h2>Quick Notes</h2>
+                        </div>
+                        <p>Keep a thought close before it drifts away.</p>
+                    </div>
+                    <div class="note-composer">
+                        <input type="text" id="noteInput" placeholder="Write a quick note...">
+                        <button id="addNoteBtn" type="button">Add Note</button>
+                    </div>
+                    <div class="notes-area">
+                        <h3>Your Notes</h3>
+                        <div id="notesContainer">
+                            <p id="emptyMessage">Your notes will appear here...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="content-section">
+                    <div class="section-heading section-heading--compact">
+                        <div>
+                            <p class="section-kicker">STUDY TOOLS</p>
+                            <h2>Make progress your way</h2>
+                        </div>
+                    </div>
+                    <div class="study-tools">
+                        <article class="tool-card">
+                            <h3>Notes Pad</h3>
+                            <p>Build out an idea in your own words.</p>
+                            <textarea placeholder="Write your notes here..."></textarea>
+                            <button id="savePadBtn" type="button">Save Note</button>
+                        </article>
+                        <article class="tool-card">
+                            <h3>Flash Cards</h3>
+                            <p>Create a question and answer for your study deck.</p>
+                            <form class="flashcard-creator" id="flashcardForm">
+                                <input id="cardQuestionInput" type="text" placeholder="Question" maxlength="160" required>
+                                <textarea id="cardAnswerInput" placeholder="Answer" maxlength="400" required></textarea>
+                                <button type="submit">Create Card</button>
+                            </form>
+                            <div class="flashcard-deck" id="flashcardDeck">
+                                <p class="empty-deck" id="emptyDeckMessage">Your created cards will appear here.</p>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="content-section subjects-section">
+                    <div class="section-heading">
+                        <div>
+                            <p class="section-kicker">LEARNING LIBRARY</p>
+                            <h2>Subjects &amp; Topics</h2>
+                        </div>
+                        <p>Choose a level and explore what you want to learn next.</p>
+                    </div>
+                    <div class="subject-tabs" role="tablist" aria-label="School level">
+                        <button class="subject-tab is-active" id="primaryTab" type="button" role="tab" aria-selected="true" data-level="primary">Primary School</button>
+                        <button class="subject-tab" id="secondaryTab" type="button" role="tab" aria-selected="false" data-level="secondary">Secondary School</button>
+                    </div>
+                    <div class="grade-picker">
+                        <label for="gradeSelect">Choose a grade</label>
+                        <select id="gradeSelect"></select>
+                    </div>
+                    <div class="subject-grid" id="subjectGrid"></div>
+                </section>
+
+                <section class="content-section progress-section">
+                    <div class="progress-card">
+                        <div class="section-heading section-heading--compact">
+                            <div>
+                                <p class="section-kicker">YOUR MOMENTUM</p>
+                                <h2>My Progress</h2>
+                            </div>
+                            <strong id="progressText">0% Complete</strong>
+                        </div>
+                        <div class="progress-stat"><span>Topics Completed</span><strong id="topicsCompleted">0 / 10</strong></div>
+                        <div class="progress-stat"><span>Flash Cards Mastered</span><strong id="cardsMastered">0</strong></div>
+                        <div class="progress-stat"><span>Study Streak</span><strong id="studyStreak">0 days</strong></div>
+                        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                    </div>
+                </section>
+
+                <section class="content-section organizer-section">
+                    <div class="organizer-card">
+                        <p class="section-kicker">CLEAR THE DECK</p>
+                        <h2>Stay Organized</h2>
+                        <p class="organizer-subtitle">Keep track of what you need to get done.</p>
+                    </div>
+                </section>
+
+                <section class="content-section Achievement badges">
+                    <div class="Achievement-card">
+                        <p class="section-kicker">SMALL WINS, BIG MOMENTUM</p>
+                        <h2>Collect Achievements</h2>
+                        <p class="achievement badges-subtitle">Every focused session is a step forward.</p>
+                        <div class="achievement-summary">
+                            <strong id="achievementCount">1 / 50</strong>
+                            <span>achievements unlocked</span>
+                        </div>
+                        <div class="achievement-grid" id="achievementGrid"></div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <script src="script.js"></script>
+    </body>
+</html>
+
+
+
+
+
