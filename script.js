@@ -2,11 +2,142 @@ const authPage = document.getElementById("authPage");
 const appShell = document.getElementById("appShell");
 const authStatus = document.getElementById("authStatus");
 const providerButtons = document.querySelectorAll("[data-provider]");
+const emailAuthForm = document.getElementById("emailAuthForm");
+const emailInput = document.getElementById("emailInput");
+const passwordInput = document.getElementById("passwordInput");
+const emailSubmitBtn = document.getElementById("emailSubmitBtn");
+const authModeBtn = document.getElementById("authModeBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const analyticsSection = document.getElementById("analyticsSection");
+const analyticsStatus = document.getElementById("analyticsStatus");
+const analyticsSessionKey = "flounderAnalyticsSession";
+const analyticsSessionId = sessionStorage.getItem(analyticsSessionKey) || crypto.randomUUID();
+sessionStorage.setItem(analyticsSessionKey, analyticsSessionId);
+const hasSupabaseConfig = Boolean(
+    window.supabase &&
+    window.FLOUNDER_SUPABASE_URL &&
+    window.FLOUNDER_SUPABASE_PUBLISHABLE_KEY &&
+    !window.FLOUNDER_SUPABASE_URL.includes("YOUR_PROJECT_REF") &&
+    !window.FLOUNDER_SUPABASE_PUBLISHABLE_KEY.includes("YOUR_PUBLISHABLE_KEY")
+);
+const supabaseClient = hasSupabaseConfig
+    ? window.supabase.createClient(window.FLOUNDER_SUPABASE_URL, window.FLOUNDER_SUPABASE_PUBLISHABLE_KEY)
+    : null;
+let currentUser = null;
+let isSignUpMode = false;
 
-function signIn(provider) {
-    localStorage.setItem("flounderAuthProvider", provider);
+async function recordAnalytics(eventType, durationSeconds = 0) {
+    if (!supabaseClient) {
+        return;
+    }
+    await supabaseClient.from("analytics_events").insert({
+        event_type: eventType,
+        user_id: currentUser?.id || null,
+        session_id: analyticsSessionId,
+        duration_seconds: durationSeconds
+    });
+}
+
+function renderAnalytics(data) {
+    document.getElementById("analyticsVisits").textContent = data.total_visits || 0;
+    document.getElementById("analyticsVisitors").textContent = data.unique_visitors || 0;
+    document.getElementById("analyticsUsers").textContent = data.active_users || 0;
+    document.getElementById("analyticsStudyTime").textContent = formatStudyTime(data.study_seconds || 0);
+    document.getElementById("analyticsNotes").textContent = data.notes_created || 0;
+    document.getElementById("analyticsCards").textContent = data.cards_created || 0;
+    document.getElementById("analyticsReviews").textContent = data.cards_reviewed || 0;
+}
+
+async function loadAnalytics() {
+    if (!currentUser || currentUser.email?.toLowerCase() !== window.FLOUNDER_ANALYTICS_OWNER_EMAIL?.toLowerCase()) {
+        return;
+    }
+    analyticsSection.hidden = false;
+    const { data, error } = await supabaseClient.rpc("get_site_analytics");
+    if (error) {
+        analyticsStatus.textContent = "Run the analytics SQL setup to view reports.";
+        return;
+    }
+    renderAnalytics(data[0] || {});
+}
+
+function showApp() {
     authPage.hidden = true;
     appShell.hidden = false;
+}
+
+async function signIn(provider) {
+    if (!supabaseClient) {
+        authStatus.textContent = "Sign-in is not configured yet. Add your Supabase settings first.";
+        return;
+    }
+    if (window.location.protocol === "file:") {
+        authStatus.textContent = "Open Flounder through Live Server before signing in.";
+        return;
+    }
+
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: provider.toLowerCase(),
+        options: { redirectTo: window.location.href }
+    });
+    if (error) {
+        authStatus.textContent = error.message.includes("provider is not enabled")
+            ? `${provider} sign-in is not enabled in Supabase yet.`
+            : error.message;
+    }
+}
+
+async function submitEmailAuth(event) {
+    event.preventDefault();
+    if (!supabaseClient) {
+        authStatus.textContent = "Sign-in is not configured yet. Add your Supabase settings first.";
+        return;
+    }
+    if (window.location.protocol === "file:") {
+        authStatus.textContent = "Open Flounder through Live Server before signing in.";
+        return;
+    }
+
+    emailSubmitBtn.disabled = true;
+    authStatus.textContent = isSignUpMode ? "Creating your account..." : "Signing you in...";
+    const credentials = { email: emailInput.value.trim(), password: passwordInput.value };
+    const result = isSignUpMode
+        ? await supabaseClient.auth.signUp({
+            ...credentials,
+            options: { emailRedirectTo: window.location.href }
+        })
+        : await supabaseClient.auth.signInWithPassword(credentials);
+    emailSubmitBtn.disabled = false;
+
+    if (result.error) {
+        authStatus.textContent = result.error.message;
+        return;
+    }
+    if (isSignUpMode && !result.data.session) {
+        authStatus.textContent = "Account created. Check your email to confirm your address, then log in.";
+        emailAuthForm.reset();
+        return;
+    }
+    authStatus.textContent = "Signed in successfully.";
+    emailAuthForm.reset();
+}
+
+function toggleAuthMode() {
+    isSignUpMode = !isSignUpMode;
+    emailSubmitBtn.textContent = isSignUpMode ? "Create Account" : "Log In";
+    authModeBtn.textContent = isSignUpMode ? "Already have an account? Log in" : "Create an account instead";
+    passwordInput.autocomplete = isSignUpMode ? "new-password" : "current-password";
+    authStatus.textContent = "";
+}
+
+async function logOut() {
+    if (!supabaseClient) {
+        return;
+    }
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) {
+        authStatus.textContent = error.message;
+    }
 }
 
 providerButtons.forEach((button) => {
@@ -17,6 +148,10 @@ providerButtons.forEach((button) => {
         setTimeout(() => signIn(provider), 350);
     });
 });
+
+emailAuthForm.addEventListener("submit", submitEmailAuth);
+authModeBtn.addEventListener("click", toggleAuthMode);
+logoutBtn.addEventListener("click", logOut);
 
 const noteInput = document.getElementById("noteInput");
 const addNoteBtn = document.getElementById("addNoteBtn");
@@ -36,6 +171,11 @@ const cancelProfileBtn = document.getElementById("cancelProfileBtn");
 const profileSaveStatus = document.getElementById("profileSaveStatus");
 const achievementGrid = document.getElementById("achievementGrid");
 const achievementCount = document.getElementById("achievementCount");
+const totalStudyTime = document.getElementById("totalStudyTime");
+const profileStreak = document.getElementById("profileStreak");
+const studyStreak = document.getElementById("studyStreak");
+const progressText = document.getElementById("progressText");
+const progressFill = document.getElementById("progressFill");
 const subjectGrid = document.getElementById("subjectGrid");
 const subjectTabs = document.querySelectorAll(".subject-tab");
 const gradeSelect = document.getElementById("gradeSelect");
@@ -223,14 +363,144 @@ const achievements = [
     ["Flounder Finisher", "Celebrate the commitment to keep learning."]
 ];
 
+const activityStorageKey = "flounderActivity";
+const defaultActivity = { totalSeconds: 0, activeDays: [], notes: 0, cards: 0, reviews: 0 };
+let activity = { ...defaultActivity, ...JSON.parse(localStorage.getItem(activityStorageKey) || "{}") };
+let lastActivityAt = Date.now();
+let newlyUnlockedAchievements = new Set();
+
+function todayKey() {
+    const now = new Date();
+    return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+}
+
+function saveActivity() {
+    localStorage.setItem(activityStorageKey, JSON.stringify(activity));
+    if (currentUser && supabaseClient) {
+        clearTimeout(saveActivity.cloudTimer);
+        saveActivity.cloudTimer = setTimeout(async () => {
+            await supabaseClient.from("user_progress").upsert({
+                user_id: currentUser.id,
+                display_name: nameInput.value.trim() || "Flounder User",
+                bio: bioInput.value.trim() || "Welcome to your Flounder profile.",
+                total_seconds: activity.totalSeconds,
+                active_days: activity.activeDays,
+                notes: activity.notes,
+                cards: activity.cards,
+                reviews: activity.reviews,
+                achievements: JSON.parse(localStorage.getItem("flounderAchievements") || "[]"),
+                updated_at: new Date().toISOString()
+            });
+        }, 500);
+    }
+}
+
+function recordAction(action) {
+    activity[action] += 1;
+    saveActivity();
+    renderActivity();
+}
+
+function getStreak() {
+    const days = new Set(activity.activeDays);
+    let streak = 0;
+    const date = new Date();
+
+    while (days.has(`${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`)) {
+        streak += 1;
+        date.setDate(date.getDate() - 1);
+    }
+
+    return streak;
+}
+
+function formatStudyTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) {
+        return `${minutes}m`;
+    }
+    return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+}
+
+function updateAchievements() {
+    const totalMinutes = Math.floor(activity.totalSeconds / 60);
+    const streak = getStreak();
+    const unlocked = new Set(JSON.parse(localStorage.getItem("flounderAchievements") || "[]"));
+    const requirements = [
+        () => totalMinutes >= 1, () => activity.notes >= 1, () => totalMinutes >= 5, () => totalMinutes >= 10,
+        () => activity.notes >= 1, () => activity.notes >= 3, () => activity.cards >= 1, () => activity.reviews >= 1,
+        () => activity.cards >= 1, () => activity.cards >= 3, () => activity.reviews >= 3, () => activity.reviews >= 10,
+        () => totalMinutes >= 15, () => totalMinutes >= 30, () => totalMinutes >= 45, () => totalMinutes >= 60,
+        () => totalMinutes >= 10, () => totalMinutes >= 20, () => streak >= 2, () => streak >= 7,
+        () => streak >= 14, () => streak >= 30, () => new Date().getHours() < 9, () => new Date().getHours() >= 18,
+        () => streak >= 3, () => totalMinutes >= 120, () => activity.notes >= 5, () => activity.cards >= 5,
+        () => activity.notes >= 10, () => activity.cards >= 10, () => totalMinutes >= 180, () => totalMinutes >= 240,
+        () => totalMinutes >= 300, () => totalMinutes >= 360, () => totalMinutes >= 420, () => totalMinutes >= 480,
+        () => totalMinutes >= 540, () => streak >= 5, () => totalMinutes >= 600, () => activity.reviews >= 20,
+        () => totalMinutes >= 720, () => totalMinutes >= 840, () => totalMinutes >= 960, () => totalMinutes >= 1080,
+        () => totalMinutes >= 1200, () => totalMinutes >= 1440, () => totalMinutes >= 1680, () => totalMinutes >= 2160,
+        () => totalMinutes >= 2880, () => totalMinutes >= 4320, () => totalMinutes >= 10080
+    ];
+
+    requirements.forEach((isMet, index) => {
+        if (isMet()) {
+            if (!unlocked.has(index)) {
+                newlyUnlockedAchievements.add(index);
+            }
+            unlocked.add(index);
+        }
+    });
+    localStorage.setItem("flounderAchievements", JSON.stringify([...unlocked]));
+}
+
+function renderActivity() {
+    const streak = getStreak();
+    totalStudyTime.textContent = formatStudyTime(activity.totalSeconds);
+    profileStreak.textContent = streak;
+    studyStreak.textContent = `${streak} day${streak === 1 ? "" : "s"}`;
+    const progress = Math.min(100, Math.floor((activity.totalSeconds / (10 * 60 * 60)) * 100));
+    progressText.textContent = `${progress}% Complete`;
+    progressFill.style.width = `${progress}%`;
+    updateAchievements();
+    renderAchievements();
+}
+
+function recordActivity() {
+    if (document.hidden || appShell.hidden) {
+        lastActivityAt = Date.now();
+        return;
+    }
+
+    const now = Date.now();
+    const elapsedSeconds = Math.min(60, Math.floor((now - lastActivityAt) / 1000));
+    if (elapsedSeconds > 0) {
+        activity.totalSeconds += elapsedSeconds;
+        recordAnalytics("study_time", elapsedSeconds);
+        if (!activity.activeDays.includes(todayKey())) {
+            activity.activeDays.push(todayKey());
+        }
+        saveActivity();
+        renderActivity();
+    }
+    lastActivityAt = now;
+}
+
+setInterval(recordActivity, 1000);
+document.addEventListener("visibilitychange", () => {
+    recordActivity();
+    lastActivityAt = Date.now();
+});
+window.addEventListener("beforeunload", recordActivity);
+
 function renderAchievements() {
-    const unlockedAchievements = JSON.parse(localStorage.getItem("flounderAchievements") || "[0]");
+    const unlockedAchievements = JSON.parse(localStorage.getItem("flounderAchievements") || "[]");
     achievementGrid.innerHTML = "";
 
     achievements.forEach(([name, description], index) => {
         const badge = document.createElement("article");
         const isUnlocked = unlockedAchievements.includes(index);
-        badge.className = `achievement-badge${isUnlocked ? " is-unlocked" : " is-locked"}`;
+        const hasJustUnlocked = newlyUnlockedAchievements.has(index);
+        badge.className = `achievement-badge${isUnlocked ? " is-unlocked" : " is-locked"}${hasJustUnlocked ? " is-new-unlock" : ""}`;
 
         const icon = document.createElement("span");
         icon.className = "achievement-icon";
@@ -252,6 +522,7 @@ function renderAchievements() {
     });
 
     achievementCount.textContent = `${unlockedAchievements.length} / ${achievements.length}`;
+    newlyUnlockedAchievements.clear();
 }
 
 function loadProfile() {
@@ -259,6 +530,44 @@ function loadProfile() {
     bioInput.value = localStorage.getItem("flounderProfileBio") || "Welcome to your Flounder profile.";
     profileName.textContent = nameInput.value;
     profileBio.textContent = bioInput.value;
+}
+
+async function loadCloudProgress(user) {
+    const { data, error } = await supabaseClient
+        .from("user_progress")
+        .select("display_name, bio, total_seconds, active_days, notes, cards, reviews, achievements")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    if (error) {
+        authStatus.textContent = "Signed in, but cloud progress could not be loaded.";
+        return;
+    }
+    if (!data) {
+        activity = { ...defaultActivity };
+        localStorage.setItem(activityStorageKey, JSON.stringify(activity));
+        localStorage.setItem("flounderAchievements", "[]");
+        localStorage.setItem("flounderProfileName", "Flounder User");
+        localStorage.setItem("flounderProfileBio", "Welcome to your Flounder profile.");
+        loadProfile();
+        renderActivity();
+        saveActivity();
+        return;
+    }
+
+    activity = {
+        totalSeconds: data.total_seconds || 0,
+        activeDays: Array.isArray(data.active_days) ? data.active_days : [],
+        notes: data.notes || 0,
+        cards: data.cards || 0,
+        reviews: data.reviews || 0
+    };
+    localStorage.setItem(activityStorageKey, JSON.stringify(activity));
+    localStorage.setItem("flounderAchievements", JSON.stringify(data.achievements || []));
+    localStorage.setItem("flounderProfileName", data.display_name || "Flounder User");
+    localStorage.setItem("flounderProfileBio", data.bio || "Welcome to your Flounder profile.");
+    loadProfile();
+    renderActivity();
 }
 
 function saveProfile(event) {
@@ -276,6 +585,7 @@ function saveProfile(event) {
     profileName.textContent = name;
     profileBio.textContent = bio || "Welcome to your Flounder profile.";
     profileSaveStatus.textContent = "Profile saved";
+    saveActivity();
 }
 
 function cancelProfileEdit() {
@@ -314,6 +624,8 @@ function addNote() {
     note.append(noteText, deleteButton);
     notesContainer.appendChild(note);
     noteInput.value = "";
+    recordAction("notes");
+    recordAnalytics("note_created");
 }
 
 function saveNotesPad() {
@@ -349,6 +661,10 @@ function renderFlashcards() {
             const showingAnswer = cardElement.classList.toggle("is-flipped");
             cardFace.textContent = showingAnswer ? card.answer : card.question;
             flipButton.textContent = showingAnswer ? "Show Question" : "Show Answer";
+            if (showingAnswer) {
+                recordAction("reviews");
+                recordAnalytics("card_reviewed");
+            }
         });
 
         const deleteButton = document.createElement("button");
@@ -388,6 +704,8 @@ function createFlashcard(event) {
     flashcardForm.reset();
     cardQuestionInput.focus();
     renderFlashcards();
+    recordAction("cards");
+    recordAnalytics("card_created");
 }
 
 addNoteBtn.addEventListener("click", addNote);
@@ -406,6 +724,40 @@ renderFlashcards();
 renderAchievements();
 populateGrades("primary");
 renderSubjects("primary", gradeSelect.value);
+
+async function initializeAuth() {
+    if (!supabaseClient) {
+        authPage.hidden = false;
+        appShell.hidden = true;
+        authStatus.textContent = "Connect Supabase to sign in with Apple or Google.";
+        renderActivity();
+        return;
+    }
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    recordAnalytics("visit");
+    currentUser = session?.user || null;
+    if (currentUser) {
+        showApp();
+        await loadCloudProgress(currentUser);
+        await loadAnalytics();
+    }
+    supabaseClient.auth.onAuthStateChange(async (_event, changedSession) => {
+        currentUser = changedSession?.user || null;
+        if (currentUser) {
+            showApp();
+            await loadCloudProgress(currentUser);
+            await loadAnalytics();
+        } else {
+            authPage.hidden = false;
+            appShell.hidden = true;
+            authStatus.textContent = "You have been logged out.";
+        }
+    });
+    renderActivity();
+}
+
+initializeAuth();
 
 
 

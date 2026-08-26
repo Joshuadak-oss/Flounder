@@ -29,6 +29,18 @@
                     </button>
                 </div>
 
+                <div class="email-auth" id="emailAuth">
+                    <div class="auth-divider"><span>or use email</span></div>
+                    <form id="emailAuthForm">
+                        <label for="emailInput">Email address</label>
+                        <input id="emailInput" type="email" autocomplete="email" placeholder="you@example.com" required>
+                        <label for="passwordInput">Password</label>
+                        <input id="passwordInput" type="password" autocomplete="current-password" minlength="6" placeholder="At least 6 characters" required>
+                        <button class="email-submit-button" id="emailSubmitBtn" type="submit">Log In</button>
+                    </form>
+                    <button class="auth-mode-button" id="authModeBtn" type="button">Create an account instead</button>
+                </div>
+
                 <p class="auth-terms">By continuing, you agree to Flounder&apos;s terms and privacy policy.</p>
                 <p class="auth-status" id="authStatus" role="status" aria-live="polite"></p>
             </div>
@@ -42,10 +54,31 @@
                         <h1>Flounder</h1>
                     </div>
                     <p class="top-bar-tagline">Connect. Share. Create.</p>
+                    <button class="logout-button" id="logoutBtn" type="button">Log out</button>
                 </div>
             </header>
 
             <main>
+                <section class="content-section analytics-section" id="analyticsSection" hidden>
+                    <div class="analytics-card">
+                        <div class="section-heading section-heading--compact">
+                            <div>
+                                <p class="section-kicker">SITE ANALYTICS</p>
+                                <h2>Flounder Activity</h2>
+                            </div>
+                            <p id="analyticsStatus" role="status" aria-live="polite"></p>
+                        </div>
+                        <div class="analytics-grid">
+                            <div><strong id="analyticsVisits">0</strong><span>Visits</span></div>
+                            <div><strong id="analyticsVisitors">0</strong><span>Visitors</span></div>
+                            <div><strong id="analyticsUsers">0</strong><span>Active users</span></div>
+                            <div><strong id="analyticsStudyTime">0m</strong><span>Study time</span></div>
+                            <div><strong id="analyticsNotes">0</strong><span>Notes created</span></div>
+                            <div><strong id="analyticsCards">0</strong><span>Cards created</span></div>
+                            <div><strong id="analyticsReviews">0</strong><span>Reviews</span></div>
+                        </div>
+                    </div>
+                </section>
                 <section class="profile">
                     <div class="profile-picture" aria-hidden="true">F</div>
                     <div class="profile-info">
@@ -55,8 +88,8 @@
                         <p class="bio" id="profileBio">Welcome to your Flounder profile.</p>
                     </div>
                     <div class="profile-stats">
-                        <div><strong>0</strong><span>Time</span></div>
-                        <div><strong>0</strong><span>Streak</span></div>
+                        <div><strong id="totalStudyTime">0m</strong><span>Time</span></div>
+                        <div><strong id="profileStreak">0</strong><span>Streak</span></div>
                     </div>
                     <form class="profile-editor" id="profileForm">
                         <div class="profile-editor-fields">
@@ -180,6 +213,8 @@
             </main>
         </div>
 
+        <script src="supabase-config.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
         <script src="script.js"></script>
     </body>
 </html>

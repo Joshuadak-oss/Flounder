@@ -259,6 +259,70 @@ body:has(.auth-page:not([hidden])) {
     font-weight: bold;
 }
 
+.email-auth {
+    margin-top: 22px;
+    text-align: left;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    color: #89929a;
+    font-size: 12px;
+    text-align: center;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    height: 1px;
+    flex: 1;
+    background: #d9dfe5;
+}
+
+.email-auth label {
+    display: block;
+    margin: 10px 0 6px;
+    color: #405160;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.email-auth input {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid #d9dfe5;
+    border-radius: 8px;
+    font: inherit;
+}
+
+.email-submit-button,
+.auth-mode-button {
+    width: 100%;
+    margin-top: 14px;
+}
+
+.email-submit-button {
+    min-height: 46px;
+    border: 0;
+    border-radius: 8px;
+    background: #1877f2;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.auth-mode-button {
+    border: 0;
+    background: transparent;
+    color: #1877f2;
+    cursor: pointer;
+    font-size: 13px;
+}
+
 @media (max-width: 600px) {
     .auth-panel {
         padding: 34px 22px 25px;
@@ -1164,6 +1228,50 @@ button {
     border-color: #e6bd4e;
 }
 
+.achievement-badge.is-new-unlock {
+    animation: achievement-unlocked 700ms ease both;
+}
+
+.achievement-badge.is-new-unlock .achievement-icon {
+    animation: achievement-icon-unlocked 700ms ease both;
+}
+
+@keyframes achievement-unlocked {
+    0% {
+        opacity: 0.55;
+        transform: scale(0.92);
+        box-shadow: 0 0 0 0 rgba(230, 189, 78, 0.55);
+    }
+    55% {
+        transform: scale(1.04);
+        box-shadow: 0 0 0 10px rgba(230, 189, 78, 0);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(230, 189, 78, 0);
+    }
+}
+
+@keyframes achievement-icon-unlocked {
+    0% {
+        transform: rotate(-18deg) scale(0.7);
+    }
+    55% {
+        transform: rotate(10deg) scale(1.25);
+    }
+    100% {
+        transform: rotate(0) scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .achievement-badge.is-new-unlock,
+    .achievement-badge.is-new-unlock .achievement-icon {
+        animation: none;
+    }
+}
+
 .achievement-badge.is-locked {
     background: #f8f8f6;
     border-color: #e3e1d8;
@@ -1439,4 +1547,35 @@ button {
     .subject-grid {
         grid-template-columns: 1fr;
     }
+}
+
+.analytics-card {
+    padding: 22px;
+    background: #eef7fb;
+    border: 1px solid #c4e0ea;
+    border-radius: 12px;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.analytics-grid div {
+    display: grid;
+    gap: 5px;
+    padding: 14px;
+    background: #fff;
+    border-radius: 8px;
+}
+
+.analytics-grid strong {
+    color: var(--ink);
+    font-size: 22px;
+}
+
+.analytics-grid span {
+    color: var(--muted);
+    font-size: 12px;
 }
