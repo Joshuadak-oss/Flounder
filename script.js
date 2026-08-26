@@ -1,19 +1,18 @@
 const authPage = document.getElementById("authPage");
 const appShell = document.getElementById("appShell");
 const authStatus = document.getElementById("authStatus");
-const providerButtons = document.querySelectorAll("[data-provider]");
-const emailAuthForm = document.getElementById("emailAuthForm");
-const emailInput = document.getElementById("emailInput");
-const passwordInput = document.getElementById("passwordInput");
-const emailSubmitBtn = document.getElementById("emailSubmitBtn");
-const authModeBtn = document.getElementById("authModeBtn");
+const continueBtn = document.getElementById("continueBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const analyticsSection = document.getElementById("analyticsSection");
 const analyticsStatus = document.getElementById("analyticsStatus");
 const installBtn = document.getElementById("installBtn");
 const analyticsSessionKey = "flounderAnalyticsSession";
-const analyticsSessionId = sessionStorage.getItem(analyticsSessionKey) || crypto.randomUUID();
-sessionStorage.setItem(analyticsSessionKey, analyticsSessionId);
+let analyticsSessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+try {
+    analyticsSessionId = sessionStorage.getItem(analyticsSessionKey) || window.crypto?.randomUUID?.() || analyticsSessionId;
+    sessionStorage.setItem(analyticsSessionKey, analyticsSessionId);
+} catch (_error) {
+}
 const hasSupabaseConfig = Boolean(
     window.supabase &&
     window.FLOUNDER_SUPABASE_URL &&
@@ -29,8 +28,24 @@ let isSignUpMode = false;
 let analyticsRefreshTimer = null;
 let deferredInstallPrompt = null;
 
+continueBtn.addEventListener("click", () => {
+    showApp();
+    recordAnalytics("visit");
+});
+
 if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+    let isRefreshingForUpdate = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (isRefreshingForUpdate) {
+            return;
+        }
+        isRefreshingForUpdate = true;
+        window.location.reload();
+    });
+    window.addEventListener("load", async () => {
+        const registration = await navigator.serviceWorker.register("sw.js");
+        await registration.update();
+    });
 }
 
 window.addEventListener("beforeinstallprompt", (event) => {
@@ -113,6 +128,7 @@ function scheduleAnalyticsRefresh(delay) {
 function showApp() {
     authPage.hidden = true;
     appShell.hidden = false;
+    logoutBtn.hidden = !currentUser;
 }
 
 async function signIn(provider) {
@@ -125,15 +141,28 @@ async function signIn(provider) {
         return;
     }
 
-    const { error } = await supabaseClient.auth.signInWithOAuth({
-        provider: provider.toLowerCase(),
-        options: { redirectTo: window.location.href }
-    });
+    let result;
+    try {
+        result = await supabaseClient.auth.signInWithOAuth({
+            provider: provider.toLowerCase(),
+            options: { redirectTo: getAuthRedirectUrl() }
+        });
+    } catch (error) {
+        authStatus.textContent = error.message || "Authentication failed. Please try again.";
+        return;
+    }
+    const { error } = result;
     if (error) {
         authStatus.textContent = error.message.includes("provider is not enabled")
             ? `${provider} sign-in is not enabled in Supabase yet.`
             : error.message;
     }
+}
+
+function getAuthRedirectUrl() {
+    return window.location.protocol === "http:" || window.location.protocol === "https:"
+        ? `${window.location.origin}${window.location.pathname}`
+        : window.location.href;
 }
 
 async function submitEmailAuth(event) {
@@ -142,23 +171,30 @@ async function submitEmailAuth(event) {
         authStatus.textContent = "Sign-in is not configured yet. Add your Supabase settings first.";
         return;
     }
-    if (window.location.protocol === "file:") {
-        authStatus.textContent = "Open Flounder through Live Server before signing in.";
-        return;
-    }
 
     const email = emailInput.value.trim().toLowerCase();
     const password = passwordInput.value;
+    if (!emailInput.checkValidity() || !email) {
+        authStatus.textContent = "Enter a valid email address.";
+        emailInput.focus();
+        return;
+    }
+    if (password.length < 6) {
+        authStatus.textContent = "Your password must contain at least 6 characters.";
+        passwordInput.focus();
+        return;
+    }
     emailSubmitBtn.disabled = true;
     authStatus.textContent = isSignUpMode ? "Creating your account..." : "Signing you in...";
 
     let result;
     try {
+        const redirectUrl = getAuthRedirectUrl();
         result = isSignUpMode
             ? await supabaseClient.auth.signUp({
                 email,
                 password,
-                options: { emailRedirectTo: window.location.href }
+                ...(redirectUrl ? { options: { emailRedirectTo: redirectUrl } } : {})
             })
             : await supabaseClient.auth.signInWithPassword({ email, password });
     } catch (error) {
@@ -172,6 +208,10 @@ async function submitEmailAuth(event) {
         const message = result.error.message.toLowerCase();
         authStatus.textContent = message.includes("email not confirmed")
             ? "Please confirm your email address before logging in."
+            : message.includes("user not found") || message.includes("email not found")
+                ? "No account uses this email yet. Choose Create an account instead."
+                : message.includes("password should be at least") || message.includes("password must be at least")
+                    ? "Your password must contain at least 6 characters."
             : message.includes("invalid login credentials")
                 ? "Email or password is incorrect."
                 : result.error.message;
@@ -204,17 +244,6 @@ async function logOut() {
     }
 }
 
-providerButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-        const provider = button.dataset.provider;
-        authStatus.textContent = `Connecting with ${provider}...`;
-
-        setTimeout(() => signIn(provider), 350);
-    });
-});
-
-emailAuthForm.addEventListener("submit", submitEmailAuth);
-authModeBtn.addEventListener("click", toggleAuthMode);
 logoutBtn.addEventListener("click", logOut);
 
 const noteInput = document.getElementById("noteInput");
@@ -896,7 +925,6 @@ async function initializeAuth() {
     if (!supabaseClient) {
         authPage.hidden = false;
         appShell.hidden = true;
-        authStatus.textContent = "Connect Supabase to sign in with Apple or Google.";
         renderActivity();
         return;
     }
@@ -904,9 +932,10 @@ async function initializeAuth() {
     const applySession = async (session, signedOutMessage = "") => {
         currentUser = session?.user || null;
         if (!currentUser) {
+            analyticsSection.hidden = true;
             authPage.hidden = false;
             appShell.hidden = true;
-            analyticsSection.hidden = true;
+            logoutBtn.hidden = true;
             authStatus.textContent = signedOutMessage;
             return;
         }
@@ -915,17 +944,20 @@ async function initializeAuth() {
         await loadAnalytics();
     };
 
-    const { data: { session }, error } = await supabaseClient.auth.getSession();
-    if (error) {
-        authStatus.textContent = "Could not restore your session. Please log in again.";
-    }
-    recordAnalytics("visit");
-    await applySession(session);
+    try {
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        if (error) {
+            throw error;
+        }
+        recordAnalytics("visit");
+        await applySession(session);
 
-    supabaseClient.auth.onAuthStateChange((event, changedSession) => {
-        setTimeout(() => applySession(changedSession, event === "SIGNED_OUT" ? "You have been logged out." : ""), 0);
-    });
-    renderActivity();
+        supabaseClient.auth.onAuthStateChange((event, changedSession) => {
+            setTimeout(() => applySession(changedSession, event === "SIGNED_OUT" ? "You have been logged out." : ""), 0);
+        });
+    } catch (error) {
+        authStatus.textContent = "You are using guest mode. Cloud sync is unavailable right now.";
+    }
 }
 
 initializeAuth();

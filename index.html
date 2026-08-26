@@ -26,29 +26,7 @@
                 <h1>Welcome to Flounder</h1>
                 <p class="auth-intro">Study, organize, and keep your best ideas moving forward.</p>
                 <button class="install-button" id="installBtn" type="button" hidden>Install Flounder</button>
-
-                <div class="auth-actions">
-                    <button class="provider-button provider-button--apple" data-provider="Apple" type="button">
-                        <span class="provider-icon" aria-hidden="true">&#63743;</span>
-                        <span>Continue with Apple</span>
-                    </button>
-                    <button class="provider-button provider-button--google" data-provider="Google" type="button">
-                        <span class="provider-icon provider-icon--google" aria-hidden="true">G</span>
-                        <span>Continue with Google</span>
-                    </button>
-                </div>
-
-                <div class="email-auth" id="emailAuth">
-                    <div class="auth-divider"><span>or use email</span></div>
-                    <form id="emailAuthForm">
-                        <label for="emailInput">Email address</label>
-                        <input id="emailInput" type="email" autocomplete="email" placeholder="you@example.com" required>
-                        <label for="passwordInput">Password</label>
-                        <input id="passwordInput" type="password" autocomplete="current-password" minlength="6" placeholder="At least 6 characters" required>
-                        <button class="email-submit-button" id="emailSubmitBtn" type="submit">Log In</button>
-                    </form>
-                    <button class="auth-mode-button" id="authModeBtn" type="button">Create an account instead</button>
-                </div>
+                <button class="continue-button" id="continueBtn" type="button">Continue</button>
 
                 <p class="auth-terms">By continuing, you agree to Flounder&apos;s terms and privacy policy.</p>
                 <p class="auth-status" id="authStatus" role="status" aria-live="polite"></p>
