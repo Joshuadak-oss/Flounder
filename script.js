@@ -25,17 +25,25 @@ const supabaseClient = hasSupabaseConfig
     : null;
 let currentUser = null;
 let isSignUpMode = false;
+let analyticsRefreshTimer = null;
 
 async function recordAnalytics(eventType, durationSeconds = 0) {
     if (!supabaseClient) {
         return;
     }
-    await supabaseClient.from("analytics_events").insert({
+    const { error } = await supabaseClient.from("analytics_events").insert({
         event_type: eventType,
         user_id: currentUser?.id || null,
         session_id: analyticsSessionId,
         duration_seconds: durationSeconds
     });
+    if (error && currentUser?.email?.toLowerCase() === window.FLOUNDER_ANALYTICS_OWNER_EMAIL?.toLowerCase()) {
+        analyticsStatus.textContent = "Analytics events could not be recorded.";
+        return;
+    }
+    if (eventType !== "visit") {
+        scheduleAnalyticsRefresh(eventType === "study_time" ? 15000 : 500);
+    }
 }
 
 function renderAnalytics(data) {
@@ -49,6 +57,7 @@ function renderAnalytics(data) {
 }
 
 async function loadAnalytics() {
+    analyticsSection.hidden = true;
     if (!currentUser || currentUser.email?.toLowerCase() !== window.FLOUNDER_ANALYTICS_OWNER_EMAIL?.toLowerCase()) {
         return;
     }
@@ -59,6 +68,19 @@ async function loadAnalytics() {
         return;
     }
     renderAnalytics(data[0] || {});
+}
+
+function scheduleAnalyticsRefresh(delay) {
+    if (!currentUser || currentUser.email?.toLowerCase() !== window.FLOUNDER_ANALYTICS_OWNER_EMAIL?.toLowerCase()) {
+        return;
+    }
+    if (analyticsRefreshTimer) {
+        return;
+    }
+    analyticsRefreshTimer = setTimeout(async () => {
+        analyticsRefreshTimer = null;
+        await loadAnalytics();
+    }, delay);
 }
 
 function showApp() {
@@ -98,19 +120,34 @@ async function submitEmailAuth(event) {
         return;
     }
 
+    const email = emailInput.value.trim().toLowerCase();
+    const password = passwordInput.value;
     emailSubmitBtn.disabled = true;
     authStatus.textContent = isSignUpMode ? "Creating your account..." : "Signing you in...";
-    const credentials = { email: emailInput.value.trim(), password: passwordInput.value };
-    const result = isSignUpMode
-        ? await supabaseClient.auth.signUp({
-            ...credentials,
-            options: { emailRedirectTo: window.location.href }
-        })
-        : await supabaseClient.auth.signInWithPassword(credentials);
-    emailSubmitBtn.disabled = false;
+
+    let result;
+    try {
+        result = isSignUpMode
+            ? await supabaseClient.auth.signUp({
+                email,
+                password,
+                options: { emailRedirectTo: window.location.href }
+            })
+            : await supabaseClient.auth.signInWithPassword({ email, password });
+    } catch (error) {
+        authStatus.textContent = error.message || "Authentication failed. Please try again.";
+        return;
+    } finally {
+        emailSubmitBtn.disabled = false;
+    }
 
     if (result.error) {
-        authStatus.textContent = result.error.message;
+        const message = result.error.message.toLowerCase();
+        authStatus.textContent = message.includes("email not confirmed")
+            ? "Please confirm your email address before logging in."
+            : message.includes("invalid login credentials")
+                ? "Email or password is incorrect."
+                : result.error.message;
         return;
     }
     if (isSignUpMode && !result.data.session) {
@@ -734,25 +771,29 @@ async function initializeAuth() {
         return;
     }
 
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    recordAnalytics("visit");
-    currentUser = session?.user || null;
-    if (currentUser) {
+    const applySession = async (session, signedOutMessage = "") => {
+        currentUser = session?.user || null;
+        if (!currentUser) {
+            authPage.hidden = false;
+            appShell.hidden = true;
+            analyticsSection.hidden = true;
+            authStatus.textContent = signedOutMessage;
+            return;
+        }
         showApp();
         await loadCloudProgress(currentUser);
         await loadAnalytics();
+    };
+
+    const { data: { session }, error } = await supabaseClient.auth.getSession();
+    if (error) {
+        authStatus.textContent = "Could not restore your session. Please log in again.";
     }
-    supabaseClient.auth.onAuthStateChange(async (_event, changedSession) => {
-        currentUser = changedSession?.user || null;
-        if (currentUser) {
-            showApp();
-            await loadCloudProgress(currentUser);
-            await loadAnalytics();
-        } else {
-            authPage.hidden = false;
-            appShell.hidden = true;
-            authStatus.textContent = "You have been logged out.";
-        }
+    recordAnalytics("visit");
+    await applySession(session);
+
+    supabaseClient.auth.onAuthStateChange((event, changedSession) => {
+        setTimeout(() => applySession(changedSession, event === "SIGNED_OUT" ? "You have been logged out." : ""), 0);
     });
     renderActivity();
 }

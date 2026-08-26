@@ -62,7 +62,7 @@ security definer
 set search_path = public
 as $$
 begin
-    if lower(coalesce(auth.jwt() ->> 'email', '')) <> lower('YOUR_OWNER_EMAIL') then
+    if lower(coalesce(auth.jwt() ->> 'email', '')) <> lower('xsurgent07@gmail.com') then
         raise exception 'Not authorized';
     end if;
 
