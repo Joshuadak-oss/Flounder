@@ -1424,6 +1424,13 @@ button {
     content: "-";
 }
 
+.subject-description {
+    margin: -3px 14px 14px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
 .topic-count {
     margin-left: auto;
     color: var(--muted);

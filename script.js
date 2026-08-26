@@ -270,6 +270,104 @@ const subjectCatalog = {
     }
 };
 
+const subjectInformation = {
+    primary: {
+        "English Language": "Build confidence with words, reading, writing, and speaking.",
+        "Mathematics": "Discover numbers, patterns, shapes, and problem-solving step by step.",
+        "Science": "Explore living things, materials, forces, and the world around you.",
+        "Social Studies": "Learn how families, communities, culture, and citizenship shape daily life.",
+        "Geography": "Understand places, landscapes, weather, and how people care for Earth.",
+        "History": "Explore the past through people, events, timelines, and evidence.",
+        "Computing": "Learn how computers work and practise safe, creative digital skills.",
+        "Health and Physical Education": "Build healthy habits, movement skills, teamwork, and confidence.",
+        "Creative Arts": "Express ideas through drawing, music, drama, craft, and movement.",
+        "Religious and Moral Education": "Think about values, traditions, kindness, and respect for others.",
+        "Languages": "Learn useful words and conversations while discovering another culture.",
+        "Life Skills": "Practise communication, choices, teamwork, time, money, and personal goals."
+    },
+    secondary: {
+        "English Language": "Develop precise communication, critical reading, research, and persuasive writing.",
+        "English Literature": "Interpret poetry, drama, and fiction by exploring language, themes, and context.",
+        "Mathematics": "Use algebra, geometry, statistics, and functions to reason through complex problems.",
+        "Biology": "Study how cells, organisms, ecosystems, inheritance, and health are connected.",
+        "Chemistry": "Explain substances and reactions through atoms, bonding, energy, and analysis.",
+        "Physics": "Investigate forces, energy, waves, electricity, matter, and the universe.",
+        "Geography": "Analyse physical environments, human development, hazards, resources, and fieldwork.",
+        "History": "Evaluate evidence and explain how societies, conflicts, movements, and change developed.",
+        "Civics and Government": "Understand rights, law, democracy, institutions, and responsible citizenship.",
+        "Economics and Business": "Explore choices, markets, money, enterprise, and how organisations create value.",
+        "Computer Science": "Solve problems with algorithms, programming, data, systems, networks, and ethics.",
+        "Design and Technology": "Turn ideas into practical solutions using design, materials, testing, and sustainability.",
+        "Health and Physical Education": "Apply knowledge of the body, training, nutrition, safety, and wellbeing.",
+        "Art, Music and Drama": "Create and evaluate work through visual art, composition, performance, and theatre.",
+        "Modern Languages": "Communicate in another language while developing grammar, translation, and cultural awareness."
+    }
+};
+
+const topicExplanations = {
+    "Alphabet and phonics": "Learn the letters of the alphabet and the sounds they represent so you can read and spell words.",
+    "Reading comprehension": "Practise understanding a text, finding important details, and explaining what you have read.",
+    "Spelling": "Learn how sounds become written words and use spelling patterns to write accurately.",
+    "Grammar and punctuation": "Use the rules of language, including sentences, word types, capital letters, and punctuation marks.",
+    "Vocabulary": "Build a collection of words and learn their meanings so you can understand and express ideas clearly.",
+    "Creative writing": "Use imagination, description, characters, and events to create an engaging piece of writing.",
+    "Numbers and place value": "Understand how numbers are built and how the position of a digit changes its value.",
+    "Addition and subtraction": "Combine quantities or find the difference between them using efficient calculation strategies.",
+    "Multiplication and division": "Explore equal groups, sharing, factors, and the inverse relationship between multiplication and division.",
+    "Fractions and decimals": "Represent parts of a whole and connect fractions with decimal numbers and everyday measurements.",
+    "Measurement": "Compare and calculate length, mass, capacity, time, area, and other measurable quantities.",
+    "Geometry and shapes": "Identify, describe, compare, and draw shapes using their properties, sides, angles, and symmetry.",
+    "Data and graphs": "Collect, organise, display, and interpret information using tables, charts, and graphs.",
+    "Problem solving": "Choose mathematical strategies, explain your reasoning, and check whether an answer makes sense.",
+    "Living things": "Learn what makes something living and how organisms grow, survive, and interact with their surroundings.",
+    "Plants": "Explore how plants are structured, how they grow, and what they need to make food and reproduce.",
+    "Animals and habitats": "Study how animals are adapted to their habitats and how they depend on other living things.",
+    "The human body": "Learn about the body's main parts and how they work together to keep us healthy and active.",
+    "Materials and matter": "Compare materials by their properties and explore how matter can change state or be combined.",
+    "Forces and motion": "Explore pushes, pulls, movement, and how forces can change an object's speed or direction.",
+    "Light and sound": "Investigate how light helps us see and how vibrations travel as sound.",
+    "Earth and space": "Explore Earth's features, its place in space, and the patterns created by the Sun, Moon, and planets.",
+    "Continents and oceans": "Locate the world's major land masses and bodies of water and use maps to describe their positions.",
+    "Landforms": "Identify natural features such as mountains, valleys, deserts, and plains and understand how they form.",
+    "Weather and seasons": "Observe weather conditions and explain seasonal patterns caused by Earth's movement and tilt.",
+    "Natural resources": "Learn about useful materials from nature and why they must be managed responsibly.",
+    "Environmental care": "Understand how everyday choices affect the environment and how people can protect it.",
+    "Timelines and sources": "Arrange events in time and use objects, images, and written records as evidence about the past.",
+    "Digital safety": "Make responsible choices online by protecting personal information, privacy, and wellbeing.",
+    "Algorithms": "Create clear, ordered instructions that solve a problem or complete a task.",
+    "Healthy eating": "Learn how a balanced range of foods gives the body energy, nutrients, and support for growth.",
+    "Communication": "Share ideas clearly, listen carefully, and adapt your message for different people and situations.",
+    "Reading analysis": "Examine how a writer uses language, structure, and evidence to create meaning and effect.",
+    "Essay writing": "Plan and develop a structured response with a clear argument, relevant evidence, and connected paragraphs.",
+    "Argument and persuasion": "Use reasons, evidence, and deliberate language to influence how an audience thinks or acts.",
+    "Poetry": "Explore how poets use sound, imagery, form, and concise language to express ideas and feelings.",
+    "Drama": "Study how scripts, characters, dialogue, and performance communicate conflict and meaning.",
+    "Themes and symbolism": "Identify important ideas in a text and explain how objects, images, or events can represent them.",
+    "Number and algebra": "Use numbers, symbols, variables, and rules to represent relationships and solve problems.",
+    "Equations and inequalities": "Find unknown values and compare quantities using mathematical statements and logical steps.",
+    "Trigonometry": "Use relationships between angles and sides in triangles to calculate unknown lengths and angles.",
+    "Statistics": "Collect and analyse data using measures such as averages, spread, tables, and graphs.",
+    "Probability": "Describe how likely events are and calculate chances using outcomes and evidence.",
+    "Cell biology": "Study cells as the basic units of life and compare the structures that help them function.",
+    "Inheritance": "Explore how genetic information is passed from parents to offspring and creates variation.",
+    "Ecology": "Study relationships between organisms and the non-living parts of their environment.",
+    "Atomic structure": "Learn how atoms are organised from smaller particles and how their structure affects behaviour.",
+    "Chemical changes": "Identify reactions in which substances rearrange to form new materials with different properties.",
+    "Organic chemistry": "Study carbon-based compounds, their structures, properties, and important reactions.",
+    "Energy": "Understand how energy is transferred and transformed and how these changes affect physical systems.",
+    "Waves": "Explore patterns that transfer energy, including their speed, frequency, wavelength, and amplitude.",
+    "Electricity": "Study electric charge, current, voltage, resistance, and how circuits transfer energy.",
+    "Evolution": "Explain how inherited variation and natural selection can lead populations to change over generations.",
+    "Historical evidence": "Judge how reliable and useful sources are when building an explanation of the past.",
+    "Democracy": "Learn how people participate in decision-making and how democratic systems represent citizens.",
+    "Supply and demand": "Explore how the amount available and the desire to buy influence prices in a market.",
+    "Programming": "Write and test instructions in code so a computer can solve problems or perform tasks.",
+    "Cybersecurity": "Protect devices, systems, and information from unauthorised access, damage, or misuse.",
+    "Design process": "Move from identifying a need to researching, planning, making, testing, and improving a solution.",
+    "Mental wellbeing": "Develop habits and support strategies that help manage emotions, stress, relationships, and healthy routines.",
+    "Conversation": "Build the vocabulary, grammar, and confidence needed to communicate naturally with other speakers."
+};
+
 let selectedLevel = "primary";
 
 function populateGrades(level, selectedGrade) {
@@ -290,7 +388,7 @@ function createTopicInformation(subject, topic, grade, level) {
         : "Study the key idea, apply it to an example, and support your answer with clear reasoning.";
 
     return {
-        overview: `${topic} in ${subject} helps you develop the knowledge and skills expected in ${grade}.`,
+        overview: topicExplanations[topic] || `${topic} is a part of ${subject} that helps you understand key ideas, use important vocabulary, and practise related skills.`,
         learningGoal: gradeDescription,
         studyTip: action
     };
@@ -309,6 +407,11 @@ function renderSubjects(level, grade) {
         summary.innerHTML = `<span>${subject}</span><span class="topic-count">${topics.length} topics</span>`;
         details.appendChild(summary);
 
+        const subjectDescription = document.createElement("p");
+        subjectDescription.className = "subject-description";
+        subjectDescription.textContent = subjectInformation[level][subject];
+        details.appendChild(subjectDescription);
+
         const topicList = document.createElement("ul");
         topics.forEach((topic) => {
             const topicItem = document.createElement("li");
@@ -317,7 +420,7 @@ function renderSubjects(level, grade) {
 
             const information = createTopicInformation(subject, topic, activeGrade, level);
             const topicOverview = document.createElement("p");
-            topicOverview.textContent = information.overview;
+            topicOverview.innerHTML = `<strong>What it is:</strong> ${information.overview}`;
             const topicGoal = document.createElement("p");
             topicGoal.innerHTML = `<strong>Grade focus:</strong> ${information.learningGoal}`;
             const topicTip = document.createElement("p");
