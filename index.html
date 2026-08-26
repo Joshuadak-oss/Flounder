@@ -3,9 +3,17 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="theme-color" content="#1877f2">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="Flounder">
 
         <title>Flounder</title>
 
+        <link rel="manifest" href="manifest.json">
+        <link rel="icon" href="flounder-icon.svg" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="flounder-icon.svg">
         <link rel="stylesheet" href="style.css">
     </head>
 
@@ -17,6 +25,7 @@
                 <p class="auth-eyebrow">YOUR FOCUS, IN ONE PLACE</p>
                 <h1>Welcome to Flounder</h1>
                 <p class="auth-intro">Study, organize, and keep your best ideas moving forward.</p>
+                <button class="install-button" id="installBtn" type="button" hidden>Install Flounder</button>
 
                 <div class="auth-actions">
                     <button class="provider-button provider-button--apple" data-provider="Apple" type="button">

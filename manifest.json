@@ -1,0 +1,19 @@
+{
+    "name": "Flounder Study Space",
+    "short_name": "Flounder",
+    "description": "Study, organize, and keep your best ideas moving forward.",
+    "start_url": "./index.html",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "background_color": "#f6f4ef",
+    "theme_color": "#1877f2",
+    "icons": [
+        {
+            "src": "flounder-icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

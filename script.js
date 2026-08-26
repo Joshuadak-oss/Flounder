@@ -10,6 +10,7 @@ const authModeBtn = document.getElementById("authModeBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const analyticsSection = document.getElementById("analyticsSection");
 const analyticsStatus = document.getElementById("analyticsStatus");
+const installBtn = document.getElementById("installBtn");
 const analyticsSessionKey = "flounderAnalyticsSession";
 const analyticsSessionId = sessionStorage.getItem(analyticsSessionKey) || crypto.randomUUID();
 sessionStorage.setItem(analyticsSessionKey, analyticsSessionId);
@@ -26,6 +27,32 @@ const supabaseClient = hasSupabaseConfig
 let currentUser = null;
 let isSignUpMode = false;
 let analyticsRefreshTimer = null;
+let deferredInstallPrompt = null;
+
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+}
+
+window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    installBtn.hidden = false;
+});
+
+installBtn.addEventListener("click", async () => {
+    if (!deferredInstallPrompt) {
+        return;
+    }
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    installBtn.hidden = true;
+});
+
+window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    installBtn.hidden = true;
+});
 
 async function recordAnalytics(eventType, durationSeconds = 0) {
     if (!supabaseClient) {
