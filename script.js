@@ -56,6 +56,9 @@ window.addEventListener("beforeinstallprompt", (event) => {
 
 installBtn.addEventListener("click", async () => {
     if (!deferredInstallPrompt) {
+        authStatus.textContent = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+            ? "In Safari, tap Share, then Add to Home Screen."
+            : "Use your browser menu and choose Install Flounder or Add to Home Screen.";
         return;
     }
     deferredInstallPrompt.prompt();
