@@ -249,9 +249,24 @@ async function logOut() {
 
 logoutBtn.addEventListener("click", logOut);
 
-const noteInput = document.getElementById("noteInput");
-const addNoteBtn = document.getElementById("addNoteBtn");
-const notesContainer = document.getElementById("notesContainer");
+// Calendar variables
+const calendarSection = document.getElementById("calendarSection");
+const monthYearDisplay = document.getElementById("monthYearDisplay");
+const prevMonthBtn = document.getElementById("prevMonthBtn");
+const nextMonthBtn = document.getElementById("nextMonthBtn");
+const calendarGrid = document.getElementById("calendarGrid");
+const upcomingEventsList = document.getElementById("upcomingEventsList");
+const addEventForm = document.getElementById("addEventForm");
+const eventTitle = document.getElementById("eventTitle");
+const eventDate = document.getElementById("eventDate");
+const eventType = document.getElementById("eventType");
+const eventDescription = document.getElementById("eventDescription");
+const eventReminder = document.getElementById("eventReminder");
+
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+let calendarEvents = JSON.parse(localStorage.getItem("flounderCalendarEvents") || "[]");
+
 const savePadBtn = document.getElementById("savePadBtn");
 const notesPad = document.querySelector(".tool-card textarea");
 const flashcardForm = document.getElementById("flashcardForm");
@@ -794,38 +809,198 @@ function cancelProfileEdit() {
 
 let flashcards = JSON.parse(localStorage.getItem("flounderFlashcards") || "[]");
 
-function addNote() {
-    const text = noteInput.value.trim();
+// Calendar Functions
+function getDaysInMonth(month, year) {
+    return new Date(year, month + 1, 0).getDate();
+}
 
-    if (!text) {
-        noteInput.focus();
-        return;
+function getFirstDayOfMonth(month, year) {
+    return new Date(year, month, 1).getDay();
+}
+
+function formatDateForDisplay(date) {
+    const months = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"];
+    return `${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function formatDateForInput(year, month, day) {
+    return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function renderCalendar() {
+    monthYearDisplay.textContent = formatDateForDisplay(new Date(currentYear, currentMonth));
+    calendarGrid.innerHTML = "";
+    
+    const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+    const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
+    const daysInPrevMonth = getDaysInMonth(currentMonth - 1, currentYear);
+    
+    // Previous month's trailing days
+    for (let i = firstDay - 1; i >= 0; i--) {
+        const day = daysInPrevMonth - i;
+        const dayElement = createDayElement(day, currentMonth - 1, currentYear, true);
+        calendarGrid.appendChild(dayElement);
     }
+    
+    // Current month's days
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dayElement = createDayElement(day, currentMonth, currentYear, false);
+        calendarGrid.appendChild(dayElement);
+    }
+    
+    // Next month's leading days
+    const totalCells = calendarGrid.children.length;
+    const remainingCells = 42 - totalCells; // 6 rows * 7 days
+    for (let day = 1; day <= remainingCells; day++) {
+        const dayElement = createDayElement(day, currentMonth + 1, currentYear, true);
+        calendarGrid.appendChild(dayElement);
+    }
+}
 
-    document.getElementById("emptyMessage")?.remove();
-
-    const note = document.createElement("div");
-    note.className = "note";
-
-    const noteText = document.createElement("p");
-    noteText.textContent = text;
-
-    const deleteButton = document.createElement("button");
-    deleteButton.className = "delete-btn";
-    deleteButton.textContent = "Delete";
-    deleteButton.addEventListener("click", () => {
-        note.remove();
-        if (notesContainer.children.length === 0) {
-            notesContainer.innerHTML = "<p id=\"emptyMessage\">Your notes will appear here...</p>";
+function createDayElement(day, month, year, isOtherMonth) {
+    const dayElement = document.createElement("div");
+    dayElement.className = "calendar-day";
+    
+    // Normalize month for comparison
+    let normalizedMonth = month;
+    if (normalizedMonth < 0) normalizedMonth += 12;
+    if (normalizedMonth > 11) normalizedMonth -= 12;
+    
+    const dateStr = formatDateForInput(year, normalizedMonth, day);
+    const today = new Date();
+    const isToday = day === today.getDate() && 
+                   normalizedMonth === today.getMonth() && 
+                   year === today.getFullYear();
+    
+    const dayEvents = calendarEvents.filter(e => e.date === dateStr);
+    const hasEvent = dayEvents.length > 0;
+    
+    if (isOtherMonth) {
+        dayElement.classList.add("other-month");
+    }
+    if (isToday && !isOtherMonth) {
+        dayElement.classList.add("today");
+    }
+    if (hasEvent && !isOtherMonth) {
+        dayElement.classList.add("has-event");
+    }
+    
+    dayElement.textContent = day;
+    dayElement.addEventListener("click", () => {
+        if (!isOtherMonth) {
+            eventDate.value = dateStr;
+            eventDate.focus();
         }
     });
-
-    note.append(noteText, deleteButton);
-    notesContainer.appendChild(note);
-    noteInput.value = "";
-    recordAction("notes");
-    recordAnalytics("note_created");
+    
+    return dayElement;
 }
+
+function saveEvent(event) {
+    event.preventDefault();
+    
+    const title = eventTitle.value.trim();
+    const date = eventDate.value;
+    const type = eventType.value;
+    const description = eventDescription.value.trim();
+    const reminder = eventReminder.checked;
+    
+    if (!title || !date || !type) {
+        return;
+    }
+    
+    const newEvent = {
+        id: Date.now().toString(),
+        title,
+        date,
+        type,
+        description,
+        reminder,
+        createdAt: new Date().toISOString()
+    };
+    
+    calendarEvents.push(newEvent);
+    localStorage.setItem("flounderCalendarEvents", JSON.stringify(calendarEvents));
+    
+    addEventForm.reset();
+    eventTitle.focus();
+    renderCalendar();
+    renderUpcomingEvents();
+    recordAction("notes"); // Count as activity
+    recordAnalytics("event_created");
+}
+
+function renderUpcomingEvents() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const upcomingList = calendarEvents
+        .filter(e => {
+            const eventDate = new Date(e.date);
+            return eventDate >= today;
+        })
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .slice(0, 10); // Show next 10 events
+    
+    upcomingEventsList.innerHTML = "";
+    
+    if (upcomingList.length === 0) {
+        upcomingEventsList.innerHTML = '<p class="empty-state">No upcoming events. Add one to get started!</p>';
+        return;
+    }
+    
+    upcomingList.forEach(event => {
+        const eventDiv = document.createElement("div");
+        eventDiv.className = `event-item ${event.type}`;
+        
+        const dateObj = new Date(event.date);
+        const dateStr = dateObj.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric"
+        });
+        
+        const daysUntil = Math.ceil((dateObj - today) / (1000 * 60 * 60 * 24));
+        let dateLabel = dateStr;
+        if (daysUntil === 0) dateLabel = "Today";
+        else if (daysUntil === 1) dateLabel = "Tomorrow";
+        else if (daysUntil <= 7) dateLabel = `${daysUntil} days away`;
+        
+        eventDiv.innerHTML = `
+            <div class="event-date">${dateLabel}</div>
+            <div class="event-title">${event.title}</div>
+            <span class="event-type">${event.type.replace("_", " ")}</span>
+        `;
+        
+        upcomingEventsList.appendChild(eventDiv);
+    });
+}
+
+// Initialize calendar
+eventDate.valueAsDate = new Date();
+renderCalendar();
+renderUpcomingEvents();
+
+prevMonthBtn.addEventListener("click", () => {
+    currentMonth--;
+    if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+    }
+    renderCalendar();
+});
+
+nextMonthBtn.addEventListener("click", () => {
+    currentMonth++;
+    if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+    }
+    renderCalendar();
+});
+
+addEventForm.addEventListener("submit", saveEvent);
 
 function saveNotesPad() {
     localStorage.setItem("flounderNotesPad", notesPad.value);
@@ -834,6 +1009,8 @@ function saveNotesPad() {
         savePadBtn.textContent = "Save Note";
     }, 1200);
 }
+
+
 
 function renderFlashcards() {
     flashcardDeck.innerHTML = "";
@@ -907,12 +1084,6 @@ function createFlashcard(event) {
     recordAnalytics("card_created");
 }
 
-addNoteBtn.addEventListener("click", addNote);
-noteInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-        addNote();
-    }
-});
 savePadBtn.addEventListener("click", saveNotesPad);
 flashcardForm.addEventListener("submit", createFlashcard);
 notesPad.value = localStorage.getItem("flounderNotesPad") || "";

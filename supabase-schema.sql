@@ -81,3 +81,36 @@ $$;
 
 revoke all on function public.get_site_analytics() from public;
 grant execute on function public.get_site_analytics() to authenticated;
+
+create table if not exists public.calendar_events (
+    id text primary key,
+    user_id uuid not null references auth.users(id) on delete cascade,
+    title text not null,
+    description text,
+    event_date date not null,
+    event_type text not null check (event_type in ('exam', 'test', 'assignment', 'study_session')),
+    reminder boolean not null default false,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+create index if not exists calendar_events_user_id_idx on public.calendar_events(user_id);
+create index if not exists calendar_events_date_idx on public.calendar_events(event_date);
+
+alter table public.calendar_events enable row level security;
+
+drop policy if exists "Users can read their own calendar events" on public.calendar_events;
+create policy "Users can read their own calendar events"
+    on public.calendar_events for select using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own calendar events" on public.calendar_events;
+create policy "Users can insert their own calendar events"
+    on public.calendar_events for insert with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own calendar events" on public.calendar_events;
+create policy "Users can update their own calendar events"
+    on public.calendar_events for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own calendar events" on public.calendar_events;
+create policy "Users can delete their own calendar events"
+    on public.calendar_events for delete using (auth.uid() = user_id);
